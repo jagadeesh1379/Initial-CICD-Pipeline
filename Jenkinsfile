@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         IMAGE_NAME = "python-cicd-demo"
-        CONTAINER_NAME = "python-app"
-        PORT = "5000"
+        CONTAINER_NAME = "python-cicd-app"
+        APP_PORT = "5000"
     }
 
     stages {
@@ -18,18 +18,24 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "📦 Building Docker image..."
-                sh "docker build -t ${IMAGE_NAME} ."
+                sh """
+                    docker build -t $IMAGE_NAME .
+                """
             }
         }
 
         stage('Run Application') {
             steps {
-                echo "🚀 Running Docker container..."
-                // Stop and remove previous container if exists
+                echo "🚀 Running Flask application..."
                 sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                    docker run -d -p ${PORT}:5000 --name ${CONTAINER_NAME} ${IMAGE_NAME}
+                    # Stop existing container if running
+                    if [ \$(docker ps -q -f name=$CONTAINER_NAME) ]; then
+                        docker stop $CONTAINER_NAME
+                        docker rm $CONTAINER_NAME
+                    fi
+
+                    # Run new container
+                    docker run -d --name $CONTAINER_NAME -p $APP_PORT:5000 $IMAGE_NAME
                 """
             }
         }
@@ -37,7 +43,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI/CD pipeline succeeded!"
+            echo "✅ CI/CD pipeline completed successfully!"
         }
         failure {
             echo "❌ CI/CD pipeline failed. Check logs."
