@@ -18,23 +18,23 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "📦 Building Docker image..."
-                powershell """
-                docker build -t $env:IMAGE_NAME .
-                """
+                sh '''
+                docker build -t $IMAGE_NAME .
+                '''
             }
         }
 
         stage('Run Application') {
             steps {
                 echo "🚀 Running Flask app in Docker container..."
-                powershell """
+                sh '''
                 # Stop container if already exists
-                docker stop $env:CONTAINER_NAME -ErrorAction SilentlyContinue
-                docker rm $env:CONTAINER_NAME -ErrorAction SilentlyContinue
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
 
                 # Run container
-                docker run -d -p $env:APP_PORT:5000 --name $env:CONTAINER_NAME $env:IMAGE_NAME
-                """
+                docker run -d -p $APP_PORT:5000 --name $CONTAINER_NAME $IMAGE_NAME
+                '''
             }
         }
     }
